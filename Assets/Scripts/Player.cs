@@ -4,13 +4,17 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public Weapon[] weapons;
+    [Header("Player Values")]
     public float health;
-    public float shield;
+    public float stamina;
+    public int shieldDeactivatedAtHealth;
     [Header("Control Settings")]
     public int moveSpeed;
     public Rigidbody playerRB;
+    Vector2 moveDir;
+    Vector2 mousePos;
     [Header("Weapon Settings")]
+    public Weapon[] weapons;
     public Transform WeaponOrigin;
     public LayerMask WeaponAimlayerMask;
     public int currentWeapon;
@@ -21,10 +25,18 @@ public class Player : MonoBehaviour
     public Transform GrenadeSpawnPoint;
     public int grenadeThrowPower;
     public int grenadesLeft;
+    [Header("Lightsaber")]
+    public bool lightSabernAttacking;
+    public int lightSaberDamage;
+    public int additionalLightSaberRandomDamageMax;
+    public int criticalHitChance;
+    public int lightSaberAttackSpeed;
+    int lightSaberAttackCooldown;
+    public DamageArea lightSaberDamageZone;
+    
 
 
-    Vector2 moveDir;
-    Vector2 mousePos;
+
 
     // Start is called before the first frame update
     void Start()
@@ -41,6 +53,18 @@ public class Player : MonoBehaviour
     private void FixedUpdate()
     {
         PhysicsCalculation();
+
+        if (lightSabernAttacking)
+        {
+            if(lightSaberAttackCooldown > 0)
+            {
+                lightSaberAttackCooldown--;
+            }
+            else
+            {
+                lightSabernAttacking = false;
+            }
+        }
     }
 
     public void ProcessInput()
@@ -63,7 +87,18 @@ public class Player : MonoBehaviour
             ThrowGrenade();
         }
 
-        moveDir = new Vector2(moveX, moveY).normalized;
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (!lightSabernAttacking)
+                LightSaberAttack();
+        }
+
+        if (Input.GetKeyDown("F"))
+        {
+            PlayerInteraction();
+        }
+
+            moveDir = new Vector2(moveX, moveY).normalized;
         mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
 
@@ -100,7 +135,7 @@ public class Player : MonoBehaviour
     RaycastHit hit;
     public void PhysicsCalculation()
     {
-        playerRB.velocity = new Vector3(moveDir.x * moveSpeed,0, moveDir.y * moveSpeed);
+        playerRB.velocity = new Vector3(moveDir.x * moveSpeed,playerRB.velocity.y, moveDir.y * moveSpeed);
 
         Ray cameraRay = Camera.main.ScreenPointToRay(Input.mousePosition);
         Plane groundplane = new Plane(Vector3.up, Vector3.zero);
@@ -111,7 +146,6 @@ public class Player : MonoBehaviour
         if (Physics.Raycast(cameraRay.origin, cameraRay.direction, out hit, Mathf.Infinity, WeaponAimlayerMask))
         {
             WeaponOrigin.transform.LookAt(new Vector3(hit.point.x, hit.point.y, hit.point.z));
-            //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
         }
         else
         {
@@ -130,25 +164,45 @@ public class Player : MonoBehaviour
 
     public void Fire()
     {
-        if(weapons[currentWeapon].bulletsLeft > 0)
+        if (!lightSabernAttacking)
         {
-            GameObject bullet = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].bulletSpawnPoint.position,Quaternion.identity);
-            bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce,ForceMode.Impulse);
-            weapons[currentWeapon].weaponObject.GetComponent<AudioSource>().PlayOneShot(weapons[currentWeapon].shootSound);
+            if (weapons[currentWeapon].bulletsLeft > 0)
+            {
+                GameObject bullet = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].bulletSpawnPoint.position, Quaternion.identity);
+                bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                weapons[currentWeapon].weaponObject.GetComponent<AudioSource>().PlayOneShot(weapons[currentWeapon].shootSound);
+            }
+            else
+            {
+                ReloadWeapon();
+            }
         }
-        else
-        {
-            ReloadWeapon();
-        }
+    }
+
+    public void PlayerInteraction()
+    {
+
     }
 
     public void ThrowGrenade()
     {
-        if(grenadesLeft > 0)
+        if (!lightSabernAttacking)
         {
-            GameObject grenade = Instantiate(grenadePrefab, GrenadeSpawnPoint.position, Quaternion.identity);
-            grenade.GetComponent<Rigidbody>().AddRelativeForce(GrenadeSpawnPoint.forward * grenadeThrowPower, ForceMode.Impulse);
+            if (grenadesLeft > 0)
+            {
+                GameObject grenade = Instantiate(grenadePrefab, GrenadeSpawnPoint.position, Quaternion.identity);
+                grenade.GetComponent<Rigidbody>().AddRelativeForce(GrenadeSpawnPoint.forward * grenadeThrowPower, ForceMode.Impulse);
+            }
         }
+    }
+
+    public void LightSaberAttack()
+    {
+        lightSaberAttackCooldown = lightSaberAttackSpeed;
+        lightSabernAttacking = true;
+
+        int randomDamage = Random.Range(0, additionalLightSaberRandomDamageMax);
+        lightSaberDamageZone.DealDamage(lightSaberDamage + randomDamage);
     }
 
     public void ReloadWeapon()

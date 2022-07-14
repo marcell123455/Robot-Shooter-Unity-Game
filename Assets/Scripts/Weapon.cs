@@ -19,6 +19,7 @@ public class Weapon
     public GameObject BulletPrefab;
     public AudioClip shootSound;
     public int damage;
+    public int additionalRandomDamageMax;
     public int bulletDelay;
     public float bulletFlySpeedForce;
     [Header("Runtime Values")]
