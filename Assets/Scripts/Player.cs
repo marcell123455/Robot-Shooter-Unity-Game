@@ -5,11 +5,21 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     [Header("Player Values")]
-    public float health;
-    public float stamina;
+    public float maxHealth;
+    public float maxStamina;
+    public int staminaRechargeSpeed;
+    public int staminaRechargeDelay;
+    int staminaRechargeCounter;
+    float health;
+    float stamina;
     public int shieldDeactivatedAtHealth;
     [Header("Control Settings")]
     public int moveSpeed;
+    public int sprintSpeed;
+    public float moveAcceleration;
+    public float sprint;
+    public int sprintStamina;
+
     public Rigidbody playerRB;
     Vector2 moveDir;
     Vector2 mousePos;
@@ -32,7 +42,10 @@ public class Player : MonoBehaviour
     public int criticalHitChance;
     public int lightSaberAttackSpeed;
     int lightSaberAttackCooldown;
+    public int lightSaberAttackStamina;
     public DamageArea lightSaberDamageZone;
+    public AudioClip[] lightSaberAudioClips;
+    public AudioSource lightSaberAudioSource;
     
 
 
@@ -41,7 +54,7 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        stamina = maxStamina;
     }
 
     // Update is called once per frame
@@ -72,6 +85,18 @@ public class Player : MonoBehaviour
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveY = Input.GetAxisRaw("Vertical");
 
+
+        if (Input.GetKey(KeyCode.LeftShift) && stamina - sprintStamina > 0 && (moveX != 0 || moveY != 0))
+        {
+            sprint = Mathf.Clamp(sprint + moveAcceleration,0, 1f);
+            stamina = stamina - sprintStamina;
+            staminaRechargeCounter = staminaRechargeDelay;
+        }
+        else
+        {
+            sprint = Mathf.Clamp(sprint - moveAcceleration, 0, 1f);
+        }
+
         if (Input.GetMouseButtonDown(0) && !weapons[currentWeapon].allowButtonHold)
         {
             Fire();
@@ -87,18 +112,22 @@ public class Player : MonoBehaviour
             ThrowGrenade();
         }
 
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(1) && stamina - lightSaberAttackStamina > 0)
         {
             if (!lightSabernAttacking)
+            {
                 LightSaberAttack();
+                stamina = stamina - lightSaberAttackStamina;
+                staminaRechargeCounter = staminaRechargeDelay;
+            }
         }
 
-        if (Input.GetKeyDown("F"))
+        if (Input.GetKeyDown(KeyCode.F))
         {
             PlayerInteraction();
         }
 
-            moveDir = new Vector2(moveX, moveY).normalized;
+        moveDir = new Vector2(moveX, moveY).normalized;
         mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
 
@@ -128,21 +157,28 @@ public class Player : MonoBehaviour
 
         }
 
-
+        if(staminaRechargeCounter <= 0)
+        {
+            stamina = Mathf.Clamp(stamina + staminaRechargeSpeed, 0, maxStamina);
+        }
+        else
+        {
+            staminaRechargeCounter--;
+        }
 
 
     }
     RaycastHit hit;
     public void PhysicsCalculation()
     {
-        playerRB.velocity = new Vector3(moveDir.x * moveSpeed,playerRB.velocity.y, moveDir.y * moveSpeed);
+        playerRB.velocity = new Vector3(moveDir.x * (moveSpeed + (sprint * sprintSpeed)) ,playerRB.velocity.y, moveDir.y * (moveSpeed + (sprint * sprintSpeed)));
 
         Ray cameraRay = Camera.main.ScreenPointToRay(Input.mousePosition);
         Plane groundplane = new Plane(Vector3.up, Vector3.zero);
         float raylengh;
 
         RaycastHit hit;
-
+        //Aim at enemy
         if (Physics.Raycast(cameraRay.origin, cameraRay.direction, out hit, Mathf.Infinity, WeaponAimlayerMask))
         {
             WeaponOrigin.transform.LookAt(new Vector3(hit.point.x, hit.point.y, hit.point.z));
@@ -203,6 +239,8 @@ public class Player : MonoBehaviour
 
         int randomDamage = Random.Range(0, additionalLightSaberRandomDamageMax);
         lightSaberDamageZone.DealDamage(lightSaberDamage + randomDamage);
+
+        lightSaberAudioSource.PlayOneShot(lightSaberAudioClips[Random.Range(0, lightSaberAudioClips.Length)]);
     }
 
     public void ReloadWeapon()
