@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
 public class Player : MonoBehaviour
 {
@@ -17,22 +18,39 @@ public class Player : MonoBehaviour
     public int moveSpeed;
     public int sprintSpeed;
     public float moveAcceleration;
-    public float sprint;
+    float sprint;
+    float moveX;
+    float moveY;
+    Vector3 pointToLook;
+    Vector3 localVelocity;
     public int sprintStamina;
 
     public Rigidbody playerRB;
+    public Animator CharacterAnimator;
+    public float AnimationSpeed;
     Vector2 moveDir;
     Vector2 mousePos;
     [Header("Weapon Settings")]
     public Weapon[] weapons;
     public Transform WeaponOrigin;
     public LayerMask WeaponAimlayerMask;
+    public AudioSource WeaponShotAudio;
     public int currentWeapon;
-    Weapon bulletDelay;
+    int bulletDelayCounter;
+    bool reloading;
+    
+    int weaponHoldAimAfterShoot;
+    public TwoBoneIKConstraint GunAimWalkIdle;
+    public TwoBoneIKConstraint GunAimRun;
+    public Rig MachineGunHold;
+    public Rig MachineGunAim;
+    bool fadeAimIn;
 
     [Header("Grenades")]
     public GameObject grenadePrefab;
     public Transform GrenadeSpawnPoint;
+    public TwoBoneIKConstraint GrenadeThrow;
+    bool fadeThrowIn;
     public int grenadeThrowPower;
     public int grenadesLeft;
     [Header("Lightsaber")]
@@ -55,16 +73,43 @@ public class Player : MonoBehaviour
     void Start()
     {
         stamina = maxStamina;
+        UpdateWeapon();
     }
 
     // Update is called once per frame
     void Update()
     {
         ProcessInput();
+        AnimatePlayer();
     }
 
     private void FixedUpdate()
     {
+        
+
+        if (Input.GetMouseButton(0) && weapons[currentWeapon].allowButtonHold)
+        {
+            weaponHoldAimAfterShoot = 20;
+            fadeAimIn = true;
+            if (bulletDelayCounter == 0)
+            {
+                Fire();
+                bulletDelayCounter = weapons[currentWeapon].bulletDelay;
+            }
+            else
+            {
+                bulletDelayCounter--;
+            }
+        }
+
+
+
+        if (!weapons[currentWeapon].allowButtonHold)
+        {
+            if (bulletDelayCounter > 0)
+                bulletDelayCounter--;
+        }
+
         PhysicsCalculation();
 
         if (lightSabernAttacking)
@@ -78,12 +123,15 @@ public class Player : MonoBehaviour
                 lightSabernAttacking = false;
             }
         }
+
+        BlendRigs();
+        
     }
 
     public void ProcessInput()
     {
-        float moveX = Input.GetAxisRaw("Horizontal");
-        float moveY = Input.GetAxisRaw("Vertical");
+        moveX = Input.GetAxisRaw("Horizontal");
+        moveY = Input.GetAxisRaw("Vertical");
 
 
         if (Input.GetKey(KeyCode.LeftShift) && stamina - sprintStamina > 0 && (moveX != 0 || moveY != 0))
@@ -99,13 +147,24 @@ public class Player : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0) && !weapons[currentWeapon].allowButtonHold)
         {
-            Fire();
+            weaponHoldAimAfterShoot = 20;
+            fadeAimIn = true;
+            if (bulletDelayCounter <= 0)
+            {
+                Fire();
+                bulletDelayCounter = weapons[currentWeapon].bulletDelay;
+            }
         }
 
-        if (Input.GetMouseButton(0) && weapons[currentWeapon].allowButtonHold)
+
+        if (Input.GetMouseButtonUp(0))
         {
-            Fire();
+            if (weapons[currentWeapon].allowButtonHold)
+            {
+                bulletDelayCounter = 0;
+            }
         }
+
 
         if (Input.GetMouseButtonDown(2))
         {
@@ -141,7 +200,7 @@ public class Player : MonoBehaviour
             {
                 currentWeapon++;
             }
-
+            UpdateWeapon();
         }
 
         if (Input.mouseScrollDelta.y == -1)
@@ -154,7 +213,7 @@ public class Player : MonoBehaviour
             {
                 currentWeapon--;
             }
-
+            UpdateWeapon();
         }
 
         if(staminaRechargeCounter <= 0)
@@ -165,6 +224,8 @@ public class Player : MonoBehaviour
         {
             staminaRechargeCounter--;
         }
+
+        
 
 
     }
@@ -190,7 +251,7 @@ public class Player : MonoBehaviour
 
         if (groundplane.Raycast(cameraRay, out raylengh))
         {
-            Vector3 pointToLook = cameraRay.GetPoint(raylengh);
+            pointToLook = cameraRay.GetPoint(raylengh);
             Debug.DrawLine(cameraRay.origin, pointToLook, Color.green);
             playerRB.transform.LookAt(new Vector3(pointToLook.x,playerRB.transform.position.y,pointToLook.z));
         }
@@ -204,15 +265,31 @@ public class Player : MonoBehaviour
         {
             if (weapons[currentWeapon].bulletsLeft > 0)
             {
-                GameObject bullet = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].bulletSpawnPoint.position, Quaternion.identity);
-                bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
-                weapons[currentWeapon].weaponObject.GetComponent<AudioSource>().PlayOneShot(weapons[currentWeapon].shootSound);
+                if (!reloading)
+                {
+                    GameObject bullet = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].bulletSpawnPoint.position, Quaternion.identity);
+                    bullet.GetComponent<Bullet>().damage = weapons[currentWeapon].damage; //+ random damage 
+                    bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                    WeaponShotAudio.PlayOneShot(weapons[currentWeapon].shootSound);
+
+                    weapons[currentWeapon].bulletsLeft--;
+                }
             }
             else
             {
-                ReloadWeapon();
+                if(!reloading)
+                StartCoroutine(ReloadWeapon(currentWeapon));
             }
         }
+    }
+
+    public void UpdateWeapon()
+    {
+        foreach(Weapon W in weapons)
+        {
+            W.weaponObject.SetActive(false);
+        }
+        weapons[currentWeapon].weaponObject.SetActive(true);
     }
 
     public void PlayerInteraction()
@@ -226,6 +303,7 @@ public class Player : MonoBehaviour
         {
             if (grenadesLeft > 0)
             {
+                fadeThrowIn = true;
                 GameObject grenade = Instantiate(grenadePrefab, GrenadeSpawnPoint.position, Quaternion.identity);
                 grenade.GetComponent<Rigidbody>().AddRelativeForce(GrenadeSpawnPoint.forward * grenadeThrowPower, ForceMode.Impulse);
             }
@@ -243,8 +321,314 @@ public class Player : MonoBehaviour
         lightSaberAudioSource.PlayOneShot(lightSaberAudioClips[Random.Range(0, lightSaberAudioClips.Length)]);
     }
 
-    public void ReloadWeapon()
+
+    private IEnumerator ReloadWeapon(int weapon)
+    {
+        if (weapons[weapon].magazinesLeft > 0) {
+            //Reload
+            reloading = true;
+            yield return new WaitForSecondsRealtime(weapons[weapon].reloadTime);
+            weapons[weapon].magazinesLeft--;
+            weapons[weapon].bulletsLeft = weapons[weapon].magazineBulletCount;
+            reloading = false;
+        }
+        else
+        {
+            //Out of Ammo
+        }
+    }
+
+
+    public void BlendRigs()
+    {
+        //Grenade throw
+        if (fadeThrowIn)
+        {
+            if (GrenadeThrow.weight != 1)
+            {
+                GrenadeThrow.weight = GrenadeThrow.weight + 0.1f;
+            }
+            else
+            {
+                fadeThrowIn = false;
+            }
+        }
+        else
+        {
+            if (GrenadeThrow.weight > 0)
+            {
+                GrenadeThrow.weight = GrenadeThrow.weight - 0.1f;
+            }
+        }
+
+        if (CharacterAnimator.GetBool("isSprintingFront") || CharacterAnimator.GetBool("isSprintingLeft") || CharacterAnimator.GetBool("isSprintingRight"))
+        {
+            //Running Rigs
+            if (currentWeapon == 0)
+            {
+                //Disable other rigs
+                if (GunAimWalkIdle.weight > 0)
+                {
+                    GunAimWalkIdle.weight = GunAimWalkIdle.weight - 0.1f;
+                }
+
+                if (fadeAimIn)
+                {
+                    if (weaponHoldAimAfterShoot > 0)
+                    {
+                        weaponHoldAimAfterShoot--;
+
+                        if (GunAimRun.weight <= 1)
+                        {
+                            GunAimRun.weight = GunAimRun.weight + 0.1f;
+                        }
+                    }
+                    else
+                    {
+                        fadeAimIn = false;
+                    }
+                }
+                else
+                {
+                    if (GunAimRun.weight > 0)
+                    {
+                        GunAimRun.weight = GunAimRun.weight - 0.1f;
+                    }
+                }
+            }
+
+            if (currentWeapon == 1)
+            {
+                //Disable other rigs
+                if (GunAimWalkIdle.weight > 0)
+                {
+                    GunAimWalkIdle.weight = GunAimWalkIdle.weight - 0.1f;
+                }
+
+                if (GunAimRun.weight > 0)
+                {
+                    GunAimRun.weight = GunAimRun.weight - 0.1f;
+                }
+            }
+        }
+        else
+        {
+            if (CharacterAnimator.GetBool("isWalkingFront") || CharacterAnimator.GetBool("isWalkingBack"))
+            {
+                //Walking Rigs
+                if (currentWeapon == 0)
+                {
+                    //Disable other rigs
+                    if (GunAimRun.weight > 0)
+                    {
+                        GunAimRun.weight = GunAimRun.weight - 0.1f;
+                    }
+
+                    if (fadeAimIn)
+                    {
+                        if (weaponHoldAimAfterShoot > 0)
+                        {
+                            weaponHoldAimAfterShoot--;
+
+                            if (GunAimWalkIdle.weight <= 1)
+                            {
+                                GunAimWalkIdle.weight = GunAimWalkIdle.weight + 0.1f;
+                            }
+                        }
+                        else
+                        {
+                            fadeAimIn = false;
+                        }
+                    }
+                    else
+                    {
+                        if (GunAimWalkIdle.weight > 0)
+                        {
+                            GunAimWalkIdle.weight = GunAimWalkIdle.weight - 0.1f;
+                        }
+                    }
+                }
+
+                if (currentWeapon == 1)
+                {
+
+                }
+
+            }
+            else
+            {
+                //Idle Rigs
+                if (currentWeapon == 0)
+                {
+                    //Disable other rigs
+                    if (GunAimRun.weight > 0)
+                    {
+                        GunAimRun.weight = GunAimRun.weight - 0.1f;
+                    }
+
+                    if (MachineGunHold.weight > 0)
+                    {
+                        MachineGunHold.weight = MachineGunHold.weight - 0.1f;
+                    }
+
+                    if (GunAimWalkIdle.weight <= 1)
+                    {
+                        GunAimWalkIdle.weight = GunAimWalkIdle.weight + 0.1f;
+                    }
+
+                }
+
+                if (currentWeapon == 1)
+                {
+                    //Disable other rigs
+                    if (GunAimRun.weight > 0)
+                    {
+                        GunAimRun.weight = GunAimRun.weight - 0.1f;
+                    }
+
+                    if (GunAimWalkIdle.weight > 0)
+                    {
+                        GunAimWalkIdle.weight = GunAimWalkIdle.weight - 0.1f;
+                    }
+
+                    if (fadeAimIn)
+                    {
+                        if (weaponHoldAimAfterShoot > 0)
+                        {
+                            weaponHoldAimAfterShoot--;
+
+                            if (MachineGunAim.weight <= 1)
+                            {
+                                MachineGunAim.weight = MachineGunAim.weight + 0.1f;
+                            }
+
+                            if (MachineGunHold.weight > 0)
+                            {
+                                MachineGunHold.weight = MachineGunHold.weight - 0.1f;
+                            }
+                        }
+                        else
+                        {
+                            fadeAimIn = false;
+                        }
+                    }
+                    else
+                    {
+                        if (MachineGunHold.weight <= 1)
+                        {
+                            MachineGunHold.weight = MachineGunHold.weight + 0.1f;
+                        }
+
+                        if (MachineGunAim.weight > 0)
+                        {
+                            MachineGunAim.weight = MachineGunAim.weight - 0.1f;
+                        }
+
+
+                    }
+
+                }
+            }
+        }
+    }
+    public void AnimatePlayer()
     {
 
+        localVelocity = new Vector3(playerRB.transform.InverseTransformDirection(playerRB.velocity).x, playerRB.transform.InverseTransformDirection(playerRB.velocity).y, playerRB.transform.InverseTransformDirection(playerRB.velocity).z);
+
+
+        if (localVelocity.z > 0.1f)
+        {
+            //Forward
+            if (sprint < 0.1f)
+            {
+                //Walking
+                CharacterAnimator.SetBool("isWalkingFront", true);
+                CharacterAnimator.SetBool("isWalkingBack", false);
+                
+                CharacterAnimator.SetBool("isSprintingFront", false);
+                CharacterAnimator.SetBool("isSprintingBack", false);
+                CharacterAnimator.SetBool("isSprintingLeft", false);
+                CharacterAnimator.SetBool("isSprintingRight", false);
+                CharacterAnimator.speed = 3f;
+            }
+            else
+            {
+                //Sprinting
+                CharacterAnimator.SetBool("isWalkingFront", false);
+                CharacterAnimator.SetBool("isWalkingBack", false);
+                
+                if (localVelocity.x > 2f)
+                {
+                    //Sprinting ForwardRight
+                    CharacterAnimator.SetBool("isSprintingFront", false);
+                    CharacterAnimator.SetBool("isSprintingBack", false);
+                    CharacterAnimator.SetBool("isSprintingLeft", false);
+                    CharacterAnimator.SetBool("isSprintingRight", true);
+
+                }
+                else
+                {
+                    if (localVelocity.x < -2f)
+                    {
+                        //Sprinting ForwardLeft
+                        CharacterAnimator.SetBool("isSprintingFront", false);
+                        CharacterAnimator.SetBool("isSprintingBack", false);
+                        CharacterAnimator.SetBool("isSprintingLeft", true);
+                        CharacterAnimator.SetBool("isSprintingRight", false);
+                    }
+                    else
+                    {
+                        //Sprinting Forward
+                        CharacterAnimator.SetBool("isSprintingFront", true);
+                        CharacterAnimator.SetBool("isSprintingBack", false);
+                        CharacterAnimator.SetBool("isSprintingLeft", false);
+                        CharacterAnimator.SetBool("isSprintingRight", false);
+                    }
+                }
+                CharacterAnimator.speed = 2f;
+            }
+        }
+        else
+        { // Backwards
+            if (localVelocity.z < -0.1f)
+            {
+                if (sprint < 0.1f)
+                {
+                    //Walking Back
+                    CharacterAnimator.SetBool("isWalkingBack", true);
+                    CharacterAnimator.SetBool("isWalkingFront", false);
+
+                    CharacterAnimator.SetBool("isSprintingFront", false);
+                    CharacterAnimator.SetBool("isSprintingBack", false);
+                    CharacterAnimator.SetBool("isSprintingLeft", false);
+                    CharacterAnimator.SetBool("isSprintingRight", false);
+                    CharacterAnimator.speed = 3f;
+                }
+                else
+                {
+                    //Sprinting Back
+                    CharacterAnimator.SetBool("isWalkingBack", false);
+                    CharacterAnimator.SetBool("isWalkingFront", false);
+
+                    CharacterAnimator.SetBool("isSprintingFront", false);
+                    CharacterAnimator.SetBool("isSprintingBack", true);
+                    CharacterAnimator.SetBool("isSprintingLeft", false);
+                    CharacterAnimator.SetBool("isSprintingRight", false);
+                    CharacterAnimator.speed = 2f;
+                }
+            }
+            else
+            {
+                CharacterAnimator.speed = 1f;
+                CharacterAnimator.SetBool("isWalkingFront", false);
+                CharacterAnimator.SetBool("isWalkingBack", false);
+
+                CharacterAnimator.SetBool("isSprintingFront", false);
+                CharacterAnimator.SetBool("isSprintingBack", false);
+                CharacterAnimator.SetBool("isSprintingLeft", false);
+                CharacterAnimator.SetBool("isSprintingRight", false);
+            }
+        }
     }
 }
