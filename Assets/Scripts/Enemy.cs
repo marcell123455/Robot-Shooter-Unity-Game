@@ -11,6 +11,12 @@ public class Enemy : MonoBehaviour
     public int health;
     public int shieldDeactivatedAtHealth;
     public int moveSpeed;
+    public int runSpeed;
+
+    [Header("Animator Settings")]
+    public Animator animator;
+    bool isAwake;
+    
     [Header("Pathfinding Settings")]
     public NavMeshAgent agent;
     public LayerMask Player, Ground;
@@ -27,6 +33,7 @@ public class Enemy : MonoBehaviour
     //States
     public float sightRange, attackRange;
     bool playerInSightRange, playerInAttackRange;
+    public int currentState;
     public enum enemyType
     {
         Soldier,
@@ -50,10 +57,57 @@ public class Enemy : MonoBehaviour
     public int TechPartsDropped;
 
     [Header("Killed Settings")]
+    public int secondsBeforeDestroy;
+    public int secondsDieAnimation;
+    bool killedInitiated;
     public UnityEvent whenKilledEvents;
+    public UnityEvent killedFXEvents;
 
+    [Header("Audio")]
+    public AudioSource stepAudio;
+    public AudioSource awakeAudio;
+    private void Step()
+    {
+        stepAudio.PlayOneShot(stepAudio.clip);
+    }
+    private void AwakeAudio()
+    {
+        awakeAudio.PlayOneShot(awakeAudio.clip);
+    }
+    public void SetAnimationState()
+    {
+        if(type == enemyType.Mech)
+        {
+            if (isAwake)
+            {
+                animator.SetBool("Awake", true);
+            
+                if(currentState == 0)
+                {
+                    //Patrolling
+                    animator.SetBool("Walk", true);
+                    animator.SetBool("Run", false);
+                    animator.SetBool("AttackBig", false);
+                }
 
+                if (currentState == 1)
+                {
+                    //Chasing
+                    animator.SetBool("Walk", true);
+                    animator.SetBool("Run", false);
+                    animator.SetBool("AttackBig", false);
+                }
 
+                if (currentState == 2)
+                {
+                    //Patrolling
+                    animator.SetBool("Walk", false);
+                    animator.SetBool("Run", false);
+                    animator.SetBool("AttackBig", true);
+                }
+            }
+        }
+    }
 
     // Start is called before the first frame update
     void Awake()
@@ -64,8 +118,11 @@ public class Enemy : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        if(type != enemyType.DestroyableProp)
-        SetEnemyState();
+        if (type != enemyType.DestroyableProp)
+        {
+            SetEnemyState();
+            SetAnimationState();
+        }
     }
 
     public void SetEnemyState()
@@ -73,23 +130,46 @@ public class Enemy : MonoBehaviour
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, Player);
         playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, Player);
 
-        if (!playerInSightRange && !playerInAttackRange) Patroling();
-        if (playerInSightRange && !playerInAttackRange) ChasePlayer();
-        if (playerInAttackRange && playerInSightRange) AttackPlayer();
+        if (!killedInitiated)
+        {
+            if (!playerInSightRange && !playerInAttackRange)
+            {
+                Patroling();
+                agent.speed = moveSpeed;
+            }
+            if (playerInSightRange && !playerInAttackRange)
+            {
+                ChasePlayer();
+                agent.speed = runSpeed;
+            }
+            if (playerInAttackRange && playerInSightRange)
+            {
+                AttackPlayer();
+                agent.speed = moveSpeed;
+            }
+        }
+        else
+        {
+            agent.speed = 0;
+        }
     }
 
     private void Patroling()
     {
-        if (!walkPointSet) SearchWalkPoint();
+        currentState = 0;
+        if (isAwake)
+        {
+            if (!walkPointSet) SearchWalkPoint();
 
-        if (walkPointSet)
-            agent.SetDestination(walkPoint);
+            if (walkPointSet)
+                agent.SetDestination(walkPoint);
 
-        Vector3 distanceToWalkPoint = transform.position - walkPoint;
+            Vector3 distanceToWalkPoint = transform.position - walkPoint;
 
-        //Walkpoint reached
-        if (distanceToWalkPoint.magnitude < 1f)
-            walkPointSet = false;
+            //Walkpoint reached
+            if (distanceToWalkPoint.magnitude < 1f)
+                walkPointSet = false;
+        }
     }
     private void SearchWalkPoint()
     {
@@ -105,11 +185,14 @@ public class Enemy : MonoBehaviour
 
     private void ChasePlayer()
     {
+        isAwake = true;
+        currentState = 1;
         agent.SetDestination(player.position);
     }
 
     private void AttackPlayer()
     {
+        currentState = 2;
         //Make sure enemy doesn't move
         agent.SetDestination(transform.position);
 
@@ -138,12 +221,22 @@ public class Enemy : MonoBehaviour
 
         if(health <= 0)
         {
-            KilledEvent();
+            if(!killedInitiated)
+            StartCoroutine(KilledEvent(secondsBeforeDestroy,secondsDieAnimation));
         }
     }
 
-    public void KilledEvent()
+
+    private IEnumerator KilledEvent(int destroyTimer, int FXTimer)
     {
+        if (type != enemyType.DestroyableProp)
+            animator.SetBool("Dead", true);
+        
+        killedInitiated = true;
         whenKilledEvents.Invoke();
+        yield return new WaitForSecondsRealtime(FXTimer);
+        killedFXEvents.Invoke();
+        yield return new WaitForSecondsRealtime(destroyTimer);
+        Destroy(this.gameObject);
     }
 }

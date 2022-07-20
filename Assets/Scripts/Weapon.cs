@@ -22,6 +22,7 @@ public class Weapon
     public Transform bulletSpawnPoint;
     public GameObject BulletPrefab;
     public AudioClip shootSound;
+    public AudioClip reloadSound;
     public int damage;
     public int additionalRandomDamageMax;
     public int bulletDelay;

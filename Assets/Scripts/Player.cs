@@ -14,6 +14,7 @@ public class Player : MonoBehaviour
     float health;
     float stamina;
     public int shieldDeactivatedAtHealth;
+    public InteractableArea interactableArea;
     [Header("Control Settings")]
     public int moveSpeed;
     public int sprintSpeed;
@@ -294,7 +295,7 @@ public class Player : MonoBehaviour
 
     public void PlayerInteraction()
     {
-
+        interactableArea.InteractWithInteractables();
     }
 
     public void ThrowGrenade()

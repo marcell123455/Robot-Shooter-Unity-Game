@@ -9,6 +9,7 @@ public class Grenade : MonoBehaviour
     public MeshRenderer grenadeObject;
     public GameObject explosionEffects;
     public AudioSource explosionAudio;
+    public Light pointLight;
     bool exploded;
     private void FixedUpdate()
     {
@@ -37,8 +38,10 @@ public class Grenade : MonoBehaviour
     public void Explode()
     {
         exploded = true;
+        pointLight.enabled = false;
         explosionAudio.Play();
         grenadeObject.enabled = false;
+        explosionEffects.SetActive(true);
 
     }
 }
