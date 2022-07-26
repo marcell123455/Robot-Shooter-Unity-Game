@@ -16,17 +16,22 @@ public class Weapon
     [Header("Weapon Settings")]
 
     public int magazineBulletCount;
-    public int reloadTime;
+    public float reloadTime;
     public bool allowButtonHold;
     [Header("Bullet Settings")]
     public Transform bulletSpawnPoint;
+    public Transform SecBulletSpawnPoint;
     public GameObject BulletPrefab;
     public AudioClip shootSound;
     public AudioClip reloadSound;
     public int damage;
     public int additionalRandomDamageMax;
     public int bulletDelay;
+    public float bulletDelayEnemy;
     public float bulletFlySpeedForce;
+    public int shotsInRow = 10;
+
+
 
 
 }

@@ -7,12 +7,19 @@ using UnityEngine.AI;
 public class Enemy : MonoBehaviour
 {
     [Header("General Settings")]
+    public Transform HealthBar;
     public enemyType type;
-    public int health;
+    public float health;
+    float orgHealth;
     public int shieldDeactivatedAtHealth;
     public int moveSpeed;
     public int runSpeed;
 
+    public Vector3 localVelocity;
+    public Rigidbody RB;
+    public SkinnedMeshRenderer[] enemySkinnedMeshes;
+    public MeshRenderer[] enemyMeshes;
+    public Color HitColor;
     [Header("Animator Settings")]
     public Animator animator;
     bool isAwake;
@@ -29,6 +36,9 @@ public class Enemy : MonoBehaviour
     //Attacking
     public float timeBetweenAttacks;
     bool alreadyAttacked;
+    public bool moveDuringAttack;
+    public int moveDuringAttackDistance;
+    int moveAttackTimer;
 
     //States
     public float sightRange, attackRange;
@@ -50,8 +60,11 @@ public class Enemy : MonoBehaviour
     public int AttackRange;
     public bool canThrowGrenades;
     public Transform grenadeSpawnPoint;
-    public Weapon Weapons;
+    public Weapon[] weapons;
     public int delayBetweenMagazines;
+    int currentWeapon;
+    bool shooting;
+
 
     [Header("Loot Settings")]
     public int TechPartsDropped;
@@ -66,17 +79,29 @@ public class Enemy : MonoBehaviour
     [Header("Audio")]
     public AudioSource stepAudio;
     public AudioSource awakeAudio;
+    public AudioSource attackAudio;
+
+    [Header("Enemy Specific Settings")]
+    public Transform MechBody;
+    public int turretTurnSpeed;
+    public Transform TurretWeapon;
+    public LineRenderer lineRenderer;
     private void Step()
     {
+        if(stepAudio != null)
         stepAudio.PlayOneShot(stepAudio.clip);
     }
     private void AwakeAudio()
     {
+        if(awakeAudio != null)
         awakeAudio.PlayOneShot(awakeAudio.clip);
     }
+
     public void SetAnimationState()
     {
-        if(type == enemyType.Mech)
+        localVelocity = new Vector3(this.transform.InverseTransformDirection(RB.velocity).x, RB.transform.InverseTransformDirection(RB.velocity).y, RB.transform.InverseTransformDirection(RB.velocity).z);
+        
+        if (type == enemyType.Mech)
         {
             if (isAwake)
             {
@@ -100,12 +125,40 @@ public class Enemy : MonoBehaviour
 
                 if (currentState == 2)
                 {
-                    //Patrolling
+                    //Attacking
                     animator.SetBool("Walk", false);
                     animator.SetBool("Run", false);
                     animator.SetBool("AttackBig", true);
                 }
             }
+        }
+
+        if (type == enemyType.Soldier)
+        {
+            
+
+                if(currentState == 2)
+                {
+                    animator.SetBool("Walk", false);
+                    animator.SetBool("Run", false);
+                }
+                else
+                {
+                    if (currentState == 1)
+                    {
+                        animator.SetBool("Walk", false);
+                        animator.SetBool("Run", true);
+                    }
+                    else
+                    {
+                        animator.SetBool("Walk", true);
+                        animator.SetBool("Run", false);
+                    }
+                }
+
+
+
+            
         }
     }
 
@@ -113,6 +166,7 @@ public class Enemy : MonoBehaviour
     void Awake()
     {
         player = GameObject.Find("Player").transform;
+        orgHealth = health;
     }
 
     // Update is called once per frame
@@ -123,7 +177,20 @@ public class Enemy : MonoBehaviour
             SetEnemyState();
             SetAnimationState();
         }
+        if (HealthBar != null)
+        {
+            HealthBar.localScale = new Vector3(health / orgHealth, 1f, 1f);
+
+        }
+
+        if(lineRenderer != null)
+        {
+            lineRenderer.SetPosition(0, lineRenderer.transform.position);
+            lineRenderer.SetPosition(1, lineRenderer.transform.position + (lineRenderer.transform.forward*10));
+        }
+
     }
+
 
     public void SetEnemyState()
     {
@@ -145,7 +212,7 @@ public class Enemy : MonoBehaviour
             if (playerInAttackRange && playerInSightRange)
             {
                 AttackPlayer();
-                agent.speed = moveSpeed;
+
             }
         }
         else
@@ -159,6 +226,11 @@ public class Enemy : MonoBehaviour
         currentState = 0;
         if (isAwake)
         {
+            if (MechBody != null)
+                MechBody.localRotation = new Quaternion(0, -180, 0, 0); 
+            
+            
+
             if (!walkPointSet) SearchWalkPoint();
 
             if (walkPointSet)
@@ -188,25 +260,111 @@ public class Enemy : MonoBehaviour
         isAwake = true;
         currentState = 1;
         agent.SetDestination(player.position);
+        if (MechBody != null)
+        {
+            MechBody.LookAt(new Vector3(player.position.x, MechBody.position.y, player.position.z));
+            MechBody.rotation *= Quaternion.Euler(0, 0, -90);
+        }
     }
 
     private void AttackPlayer()
     {
         currentState = 2;
+
+        agent.speed = moveSpeed;
         //Make sure enemy doesn't move
+
         agent.SetDestination(transform.position);
+        
 
-        transform.LookAt(player);
+        if (type == enemyType.Soldier)
+            transform.LookAt(player);
 
-        if (!alreadyAttacked)
+        if (MechBody != null)
         {
-            ///Attack code here
-            
-            ///End of attack code
-
-            alreadyAttacked = true;
-            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+            MechBody.LookAt(new Vector3(player.position.x, player.position.y, player.position.z));
+            MechBody.rotation *= Quaternion.Euler(0, 0, -90);
         }
+
+        if(type == enemyType.Turret)
+        {
+            Vector3 lTargetDir = player.position - TurretWeapon.position;
+            lTargetDir.y = 0.0f;
+            TurretWeapon.rotation = Quaternion.RotateTowards(TurretWeapon.rotation, Quaternion.LookRotation(lTargetDir), Time.deltaTime * turretTurnSpeed);
+        }
+
+        if (weapons.Length > 0 && (type != enemyType.Turret || type == enemyType.Mech))
+        {
+            weapons[currentWeapon].bulletSpawnPoint.LookAt(player);
+            if(weapons[currentWeapon].SecBulletSpawnPoint != null)
+            {
+                weapons[currentWeapon].SecBulletSpawnPoint.LookAt(player);
+            }
+        }
+
+            ///Attack code here
+            if(type == enemyType.Soldier)
+            {
+
+                //WeaponShotAudio.PlayOneShot(weapons[currentWeapon].shootSound);
+            }
+
+            if (weapons.Length > 0)
+            {
+                if(!shooting)
+                StartCoroutine(ShootBullets());
+            }
+
+    }
+
+    private IEnumerator ShootBullets()
+    {
+        if (!killedInitiated)
+        {
+            shooting = true;
+            int i = 0;
+            while (i < weapons[currentWeapon].shotsInRow)
+            {
+                if (attackAudio != null)
+                    attackAudio.PlayOneShot(attackAudio.clip);
+
+                GameObject bullet = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].bulletSpawnPoint.position, Quaternion.identity);
+                if (bullet.GetComponent<Bullet>())
+                {
+                    bullet.GetComponent<Bullet>().damage = weapons[currentWeapon].damage; //+ random damage 
+                    bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                }
+                else
+                {
+                    bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                }
+
+
+                if (weapons[currentWeapon].SecBulletSpawnPoint != null)
+                {
+
+                    GameObject bullet2 = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].SecBulletSpawnPoint.position, Quaternion.identity);
+                    if (bullet2.GetComponent<Bullet>())
+                    {
+                        bullet2.GetComponent<Bullet>().damage = weapons[currentWeapon].damage; //+ random damage 
+                        bullet2.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].SecBulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                    }
+                    else
+                    {
+                        bullet2.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].SecBulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                    }
+                }
+
+                yield return new WaitForSeconds(weapons[currentWeapon].bulletDelayEnemy);
+                i++;
+            }
+
+
+
+            yield return new WaitForSecondsRealtime(timeBetweenAttacks);
+            shooting = false;
+        }
+
     }
     private void ResetAttack()
     {
@@ -216,6 +374,9 @@ public class Enemy : MonoBehaviour
     {
         if(health > 0)
         {
+            if(type != enemyType.DestroyableProp)
+            StartCoroutine(Hit());
+            
             health = health - damage;
         }
 
@@ -226,11 +387,37 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    private IEnumerator Hit()
+    {
+        foreach (SkinnedMeshRenderer SMR in enemySkinnedMeshes)
+        {
+            SMR.material.EnableKeyword("_EMISSION");
+            SMR.material.SetColor("_EmissionColor", HitColor);
+        }
 
+        foreach (MeshRenderer MR in enemyMeshes)
+        {
+            MR.material.EnableKeyword("_EMISSION");
+            MR.material.SetColor("_EmissionColor", HitColor);
+        }
+        yield return new WaitForSecondsRealtime(0.2f);
+        
+        foreach (SkinnedMeshRenderer SMR in enemySkinnedMeshes)
+        {
+            SMR.material.SetColor("_EmissionColor", Color.black);
+        }
+
+        foreach (MeshRenderer MR in enemyMeshes)
+        {
+            MR.material.SetColor("_EmissionColor", Color.black);
+        }
+    }
     private IEnumerator KilledEvent(int destroyTimer, int FXTimer)
     {
-        if (type != enemyType.DestroyableProp)
+        if (type != enemyType.DestroyableProp && type != enemyType.Turret && type != enemyType.Drone)
+        {
             animator.SetBool("Dead", true);
+        }
         
         killedInitiated = true;
         whenKilledEvents.Invoke();

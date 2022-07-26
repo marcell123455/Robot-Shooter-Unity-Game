@@ -19,7 +19,14 @@ public static class UnityExtensions
         if (UnityExtensions.Contains(Damagemask, collision.gameObject.layer))
         {
             Debug.Log("Target in mask");
-            collision.gameObject.GetComponent<Enemy>().DealEnemyDamage(damage);
+            if (collision.gameObject.name != "Player")
+            {
+                collision.gameObject.GetComponent<Enemy>().DealEnemyDamage(damage);
+            }
+            else
+            {
+                collision.gameObject.GetComponent<Player>().DealDamage(damage);
+            }
         }
         else
         {

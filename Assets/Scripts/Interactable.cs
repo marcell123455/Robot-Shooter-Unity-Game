@@ -5,10 +5,27 @@ using UnityEngine.Events;
 
 public class Interactable : MonoBehaviour
 {
-    public UnityEvent Events;
+    [Header("Interact Settings")]
+    public UnityEvent interactEvents;
+    [Header("Trigger Settings")]
+    public LayerMask triggerMask;
+    public UnityEvent onTriggerEnterEvents;
+    public UnityEvent onTriggerExitEvents;
 
     public void Interact()
     {
-        Events.Invoke();
+        interactEvents.Invoke();
+    }
+
+    public void OnTriggerEnter(Collider other)
+    {
+        if(UnityExtensions.Contains(triggerMask,other.gameObject.layer))
+        onTriggerEnterEvents.Invoke();
+    }
+
+    public void OnTriggerExit(Collider other)
+    {
+        if (UnityExtensions.Contains(triggerMask, other.gameObject.layer))
+            onTriggerExitEvents.Invoke();
     }
 }
