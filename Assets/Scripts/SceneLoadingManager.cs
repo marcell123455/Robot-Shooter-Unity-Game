@@ -32,12 +32,27 @@ public class SceneLoadingManager : MonoBehaviour
         startedLoading = true;
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Single);
 
-        if (asyncLoad.isDone)
-            startedLoading = false;
 
         while (!asyncLoad.isDone)
         {
+            if(asyncLoad.progress >= 0.9f)
+            {
+                OnSceneLoaded();
+            }
             yield return null;
+        }
+    }
+
+    void OnSceneLoaded()
+    {
+        if (startedLoading)
+        {
+            startedLoading = false;
+
+            if (sceneToLoad == 0)
+            {
+                Destroy(this.gameObject);
+            }
         }
     }
 }

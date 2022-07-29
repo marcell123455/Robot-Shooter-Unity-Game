@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 2226868189368388856}
   - component: {fileID: 2510218922359355057}
   - component: {fileID: 3254797796436286506}
+  - component: {fileID: 2508178876719997511}
   m_Layer: 0
   m_Name: 1x3_W
   m_TagString: Untagged
@@ -126,6 +127,22 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 0.00000026226832, y: 6, z: 2}
   m_Center: {x: 0.00000017484555, y: -3, z: 1}
+--- !u!208 &2508178876719997511
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4898227903371231344}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.00001, y: 3.0000002, z: 1}
+  m_MoveThreshold: 0.1
+  m_Carve: 0
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: -3.0000002, z: 1}
+  m_TimeToStationary: 0.5
 --- !u!1 &5021476495390779030
 GameObject:
   m_ObjectHideFlags: 0
@@ -138,6 +155,7 @@ GameObject:
   - component: {fileID: 5021476495390779025}
   - component: {fileID: 5021476495390779024}
   - component: {fileID: 3504798289526353675}
+  - component: {fileID: 3436516065433114896}
   m_Layer: 0
   m_Name: 1x3_W
   m_TagString: Untagged
@@ -221,6 +239,22 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 0.00000026226832, y: 6, z: 2}
   m_Center: {x: 0.00000017484555, y: -3, z: 1}
+--- !u!208 &3436516065433114896
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5021476495390779030}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.00001, y: 3.0000002, z: 1}
+  m_MoveThreshold: 0.1
+  m_Carve: 0
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: -3.0000002, z: 1}
+  m_TimeToStationary: 0.5
 --- !u!1 &5021476496187109912
 GameObject:
   m_ObjectHideFlags: 0
@@ -399,8 +433,16 @@ MonoBehaviour:
   Doors:
   - {fileID: 7640549413181315697}
   - {fileID: 1998915621579947134}
+  DoorMeshes:
+  - {fileID: 7162645937585505675}
+  - {fileID: 2510218922359355057}
+  - {fileID: 5021476496187109915}
+  - {fileID: 5021476495390779024}
+  OpenColor: {r: 0, g: 0.40314138, b: 1, a: 1}
+  LockedColor: {r: 1, g: 0, b: 0, a: 1}
   moveSpeed: 10
   open: 0
+  locked: 0
 --- !u!1 &7215742656892704271
 GameObject:
   m_ObjectHideFlags: 0

@@ -39,6 +39,17 @@ public class UI_Manager : MonoBehaviour
     public Text grenadesPickup;
     public Text techPartsPickup;
 
+    [Header("DebugPlayerBlends")]
+    public Image KatanaHold;
+    public Image KatanaAttack;
+
+    public Image GrenadeThrow;
+    public Image GunAimWalkIdle;
+    public Image GunAimRun;
+
+    public Image MachineGunHold;
+    public Image MachineGunAim;
+    public Image MachineGunAimRun;
 
     // Start is called before the first frame update
     void Start()
@@ -56,7 +67,7 @@ public class UI_Manager : MonoBehaviour
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
         if (healthBar != null)
         {
@@ -83,6 +94,19 @@ public class UI_Manager : MonoBehaviour
             mixer.SetFloat("Music", musicVolume.value);
             mixer.SetFloat("Effects", effectsVolume.value);
         }
+
+        if(KatanaHold != null)
+        {
+            KatanaHold.fillAmount = player.KatanaHold.weight;
+            KatanaAttack.fillAmount = player.KatanaAttack1.weight;
+            GrenadeThrow.fillAmount = player.GrenadeThrow.weight;
+            GunAimWalkIdle.fillAmount = player.GunAimWalkIdle.weight;
+            GunAimRun.fillAmount = player.GunAimRun.weight;
+            MachineGunHold.fillAmount = player.MachineGunHold.weight;
+            MachineGunAim.fillAmount = player.MachineGunAim.weight;
+            MachineGunAimRun.fillAmount = player.MachineGunAimRun.weight;
+        }
+
     }
 
     public void SaveAudioSettings()
@@ -131,7 +155,7 @@ public class UI_Manager : MonoBehaviour
 
         PickupInfo.alpha = 1f;
 
-        yield return new WaitForSecondsRealtime(2);
+        yield return new WaitForSecondsRealtime(2f);
 
         PickupInfo.alpha = 0f;
 

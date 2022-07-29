@@ -11,12 +11,15 @@ public class EnemySpawn
     public Transform Spawnpoint;
     public int AnimationScale;
 }
+
+
     
 public class EnemySpawner : MonoBehaviour
 {
     public bool spawnInWaves;
     bool waveIsRunning;
     bool startEventsInvoked;
+    bool endEventsInvoked;
 
     public int waveDelay;
 
@@ -28,47 +31,91 @@ public class EnemySpawner : MonoBehaviour
     public EnemySpawn[] enemys_Wave_3;
 
     public UnityEvent StartWavesEvents;
+    public GameObject[] Barriers;
     public UnityEvent FinishedWavesEvents;
+    public Transform playerRespawn;
 
     int currentWave;
     List<GameObject> spawnedEnemys = new List<GameObject>();
 
-    public void FixedUpdate()
+    public void Start()
     {
-        if (waveIsRunning)
+        foreach (GameObject B in Barriers)
         {
-            for (int i = 0; i < spawnedEnemys.Count; i++)
+            B.SetActive(false);
+        }
+    }
+
+    public void Update()
+    {
+        if (startEventsInvoked)
+        {
+            if (waveIsRunning)
             {
-                if (spawnedEnemys[i] == null)
+                for (int i = 0; i < spawnedEnemys.Count; i++)
                 {
-                    spawnedEnemys.RemoveAt(i);
+                    if (spawnedEnemys[i] == null)
+                    {
+                        spawnedEnemys.RemoveAt(i);
+                    }
+                }
+
+                if (spawnedEnemys.Count == 0)
+                {
+                    waveIsRunning = false;
+                    if (spawnInWaves)
+                    {
+                        currentWave++;
+                        if (currentWave <= 2)
+                        {
+                            StartSpawning();
+                        }
+                        else
+                        {
+                            if(!endEventsInvoked)
+                            FinishedWaves();
+                        }
+                    }
                 }
             }
-
-            if (spawnedEnemys.Count == 0)
+            else
             {
-                waveIsRunning = false;
                 if (spawnInWaves)
                 {
-                    currentWave++;
-                    if (currentWave <= 2)
+                    if (currentWave > 2)
                     {
-                        StartSpawning();
+                        if (!endEventsInvoked)
+                            FinishedWaves();
                     }
-                    else
-                    {
+                }
+                else
+                {
+                    if (!endEventsInvoked)
                         FinishedWaves();
-                    }
                 }
             }
         }
     }
 
-
     public void StartSpawning()
     {
-        if(!startEventsInvoked)
-        StartWavesEvents.Invoke();
+        if (!startEventsInvoked)
+        {
+            foreach (GameObject B in Barriers)
+            {
+                B.SetActive(true);
+            }
+
+            StartWavesEvents.Invoke();
+
+
+
+            startEventsInvoked = true;
+            print("invoked!");
+
+            GameObject.Find("Player").GetComponent<Player>().SetPlayerCurrentRespawn(playerRespawn);
+        }
+            
 
         if (currentWave == 0)
         {
@@ -77,7 +124,7 @@ public class EnemySpawner : MonoBehaviour
                 StartCoroutine(spawnEnemy(i));
             }
 
-            waveIsRunning = true;
+            StartCoroutine(SetWaveRunning());
         }
 
         if (currentWave == 1)
@@ -87,7 +134,7 @@ public class EnemySpawner : MonoBehaviour
                 StartCoroutine(spawnEnemy(i));
             }
 
-            waveIsRunning = true;
+            StartCoroutine(SetWaveRunning());
         }
 
         if (currentWave == 2)
@@ -97,20 +144,19 @@ public class EnemySpawner : MonoBehaviour
                 StartCoroutine(spawnEnemy(i));
             }
 
-            waveIsRunning = true;
+            StartCoroutine(SetWaveRunning());
         }
 
 
 
 
     }
-
-    private void Start()
+    private IEnumerator SetWaveRunning()
     {
-        StartSpawning();
+        yield return new WaitForSecondsRealtime(1);
+        waveIsRunning = true;
     }
-
-    private IEnumerator spawnEnemy( int selectedEnemy)
+        private IEnumerator spawnEnemy( int selectedEnemy)
     {
         if (currentWave == 0) {
             //Do spawn Animation
@@ -196,8 +242,14 @@ public class EnemySpawner : MonoBehaviour
         //while animation is running Spawn Enemy
     }
 
-        public void FinishedWaves()
+    public void FinishedWaves()
     {
+        endEventsInvoked = true;
         FinishedWavesEvents.Invoke();
+        foreach (GameObject B in Barriers)
+        {
+            B.SetActive(false);
+        }
+
     }
 }

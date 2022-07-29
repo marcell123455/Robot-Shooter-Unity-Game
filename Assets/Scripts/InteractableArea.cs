@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class InteractableArea : MonoBehaviour
 {
+    [Header("GeneralSettings")]
     public LayerMask interactableObjectLayer;
     public List<Interactable> Interactables = new List<Interactable>();
+
+
     private void OnTriggerEnter(Collider other)
     {
         if (UnityExtensions.Contains(interactableObjectLayer, other.gameObject.layer))

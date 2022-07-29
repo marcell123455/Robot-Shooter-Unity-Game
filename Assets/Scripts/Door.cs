@@ -84,4 +84,16 @@ public class Door : MonoBehaviour
         }
 
     }
+
+    public void ToggleLockState()
+    {
+        if (locked)
+        {
+            locked = false;
+        }
+        else
+        {
+            locked = true;
+        }
+    }
 }

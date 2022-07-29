@@ -6,6 +6,7 @@ using UnityEngine.Animations.Rigging;
 
 public class Player : MonoBehaviour
 {
+    public Transform respawnPoint;
     public UI_Manager UI;
     private int currentTechParts;
     [Header("Player Values")]
@@ -126,42 +127,77 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        if (Input.GetKeyDown(KeyCode.V))
+        if (Time.timeScale == 1)
         {
-            if(currentInput == 0)
+            if (Input.GetKeyDown(KeyCode.V))
             {
-                currentInput = 1;
+                if (currentInput == 0)
+                {
+                    currentInput = 1;
+                }
+                else
+                {
+                    currentInput = 0;
+                }
+            }
+
+
+            if (currentInput == 0)
+            {
+                TopDownCam.Priority = 1;
+                FirstPerson.Priority = 0;
+                camera.cullingMask = Everything;
             }
             else
             {
-                currentInput = 0;
+                TopDownCam.Priority = 0;
+                FirstPerson.Priority = 1;
+                camera.cullingMask = WithoutPlayer;
             }
-        }
 
+            FPC.position = FPCpos.position;
+            ProcessInput();
+            AnimatePlayer();
 
-        if(currentInput == 0)
-        {
-            TopDownCam.Priority = 1;
-            FirstPerson.Priority = 0;
-            camera.cullingMask = Everything;
+            if (currentInput == 0)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+
         }
         else
         {
-            TopDownCam.Priority = 0;
-            FirstPerson.Priority = 1;
-            camera.cullingMask = WithoutPlayer;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
-
-        FPC.position = FPCpos.position;
-        ProcessInput();
-        AnimatePlayer();
     }
 
+    public void SetPlayerCurrentRespawn(Transform point)
+    {
+        respawnPoint = point;
+    }
+
+    public void ResetPlayer()
+    {
+        this.transform.position = respawnPoint.position;
+    }
 
     private void FixedUpdate()
     {
-        
+        if(this.transform.position.y < -10 || health <= 0)
+        {
+            this.transform.position = respawnPoint.position;
+            if(health <= 0)
+            {
+                health = maxHealth;
+            }
+        }
 
         if (Input.GetMouseButton(0) && weapons[currentWeapon].allowButtonHold)
         {
@@ -238,6 +274,12 @@ public class Player : MonoBehaviour
         xRotation -= mouseY;
 
         xRotation = Mathf.Clamp(xRotation, -90, 90);
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            if (!reloading && weapons[currentWeapon].bulletsLeft != weapons[currentWeapon].magazineBulletCount)
+                StartCoroutine(ReloadWeapon(currentWeapon));
+        }
 
         if (Input.GetKeyDown("space"))
         {
@@ -370,7 +412,7 @@ public class Player : MonoBehaviour
             {
                 playerForce.force = new Vector3(moveDir.x * (moveSpeed + (sprint * sprintSpeed)), playerRB.velocity.y, moveDir.y * (moveSpeed + (sprint * sprintSpeed))) * 200;
                 playerForce.relativeForce = new Vector3(0, 0, 0);
-                playerRB.drag = 0.8f;
+                playerRB.drag = 1.8f;
             }
             else
             {
@@ -421,7 +463,7 @@ public class Player : MonoBehaviour
             {
                 playerForce.force = new Vector3(0, 0, 0);
                 playerForce.relativeForce = new Vector3(moveX * (moveSpeed + (sprint * sprintSpeed)), 0, moveY * (moveSpeed + (sprint * sprintSpeed))) * 200;
-                playerRB.drag = 0.8f;
+                playerRB.drag = 1.8f;
             }
             else
             {
@@ -429,52 +471,38 @@ public class Player : MonoBehaviour
                 playerForce.relativeForce = new Vector3(0, 0, 0);
                 playerRB.drag = 0.2f;
             }
-            if (OnSlope())
-            {
-                print("OnSlope");
-                playerRB.AddForce(GetSlopeDirection() * moveSpeed * 300f, ForceMode.Force);
-            }
+            
 
             Ray ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
             RaycastHit hit;
 
             Vector3 targetPoint;
 
-            if(Physics.Raycast(camera.transform.position, camera.transform.forward + camera.transform.position, out hit, 80,RayShoot))
+            if(Physics.Raycast(camera.transform.position, camera.transform.forward + camera.transform.position, out hit, 80, WeaponAimlayerMask))
             {
                 targetPoint = hit.point;
             }
             else
             {
-                targetPoint = ray.GetPoint(45);
+                targetPoint = (camera.transform.forward * 100) + camera.transform.position;
             }
 
-            Debug.DrawLine(camera.transform.position, targetPoint, Color.red);
+
+            Debug.DrawLine(camera.transform.position, targetPoint, Color.yellow);
 
             //Debug.DrawLine(camera.transform.position, camera.transform.forward * 10 + camera.transform.position, Color.red);
 
+            if(targetPoint == new Vector3(0, 0, 0))
+            {
+
+            }
             WeaponOrigin.transform.LookAt(targetPoint);
 
 
         }
     }
 
-    private bool OnSlope()
-    {
-        Debug.DrawLine(transform.position, slopeHit.point, Color.cyan);
-        if (Physics.Raycast(playerRB.transform.position + (playerRB.transform.forward / 2), Vector3.down,out slopeHit, 5))
-        {
-            float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
-            return angle < maxSlope && angle != 0;
-        }
 
-        return false;
-    }
-
-    private Vector3 GetSlopeDirection()
-    {
-        return Vector3.ProjectOnPlane(moveDir, slopeHit.normal).normalized;
-    }
 
 
     public void Fire()
@@ -664,6 +692,11 @@ public class Player : MonoBehaviour
                         GunAimRun.weight = GunAimRun.weight - 0.1f;
                     }
 
+                    if (MachineGunAim.weight > 0)
+                    {
+                        MachineGunAim.weight = MachineGunAim.weight - 0.1f;
+                    }
+
                     if (fadeAimIn)
                     {
                         if (weaponHoldAimAfterShoot > 0)
@@ -756,9 +789,9 @@ public class Player : MonoBehaviour
                             GunAimRun.weight = GunAimRun.weight - 0.1f;
                         }
 
-                        if (MachineGunAim.weight > 0)
+                        if (MachineGunAimRun.weight > 0)
                         {
-                            MachineGunAim.weight = MachineGunAim.weight - 0.1f;
+                            MachineGunAimRun.weight = MachineGunAimRun.weight - 0.1f;
                         }
 
                         if (fadeAimIn)
@@ -833,6 +866,11 @@ public class Player : MonoBehaviour
                         if (GunAimWalkIdle.weight > 0)
                         {
                             GunAimWalkIdle.weight = GunAimWalkIdle.weight - 0.1f;
+                        }
+
+                        if (MachineGunAimRun.weight > 0)
+                        {
+                            MachineGunAimRun.weight = MachineGunAimRun.weight - 0.1f;
                         }
 
                         if (fadeAimIn)
@@ -937,6 +975,9 @@ public class Player : MonoBehaviour
                 }
             }
         }
+
+
+
     }
 
     private IEnumerator Hit()

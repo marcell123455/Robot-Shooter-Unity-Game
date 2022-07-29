@@ -202,12 +202,14 @@ public class Enemy : MonoBehaviour
             if (!playerInSightRange && !playerInAttackRange)
             {
                 Patroling();
+                if(agent != null)
                 agent.speed = moveSpeed;
             }
             if (playerInSightRange && !playerInAttackRange)
             {
                 ChasePlayer();
-                agent.speed = runSpeed;
+                if (agent != null)
+                    agent.speed = runSpeed;
             }
             if (playerInAttackRange && playerInSightRange)
             {
@@ -217,7 +219,8 @@ public class Enemy : MonoBehaviour
         }
         else
         {
-            agent.speed = 0;
+            if (agent != null)
+                agent.speed = 0;
         }
     }
 
@@ -233,7 +236,7 @@ public class Enemy : MonoBehaviour
 
             if (!walkPointSet) SearchWalkPoint();
 
-            if (walkPointSet)
+            if (walkPointSet && agent != null)
                 agent.SetDestination(walkPoint);
 
             Vector3 distanceToWalkPoint = transform.position - walkPoint;
@@ -259,7 +262,8 @@ public class Enemy : MonoBehaviour
     {
         isAwake = true;
         currentState = 1;
-        agent.SetDestination(player.position);
+        if (agent != null)
+            agent.SetDestination(player.position);
         if (MechBody != null)
         {
             MechBody.LookAt(new Vector3(player.position.x, MechBody.position.y, player.position.z));
@@ -270,12 +274,11 @@ public class Enemy : MonoBehaviour
     private void AttackPlayer()
     {
         currentState = 2;
-
-        agent.speed = moveSpeed;
-        //Make sure enemy doesn't move
-
-        agent.SetDestination(transform.position);
-        
+        if (agent != null)
+        {
+            agent.speed = moveSpeed;
+            agent.SetDestination(transform.position);
+        }
 
         if (type == enemyType.Soldier)
             transform.LookAt(player);
@@ -325,38 +328,45 @@ public class Enemy : MonoBehaviour
             int i = 0;
             while (i < weapons[currentWeapon].shotsInRow)
             {
-                if (attackAudio != null)
-                    attackAudio.PlayOneShot(attackAudio.clip);
-
-                GameObject bullet = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].bulletSpawnPoint.position, Quaternion.identity);
-                if (bullet.GetComponent<Bullet>())
+                if (!killedInitiated)
                 {
-                    bullet.GetComponent<Bullet>().damage = weapons[currentWeapon].damage; //+ random damage 
-                    bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
-                }
-                else
-                {
-                    bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
-                }
+                    if (attackAudio != null)
+                        attackAudio.PlayOneShot(attackAudio.clip);
 
-
-                if (weapons[currentWeapon].SecBulletSpawnPoint != null)
-                {
-
-                    GameObject bullet2 = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].SecBulletSpawnPoint.position, Quaternion.identity);
-                    if (bullet2.GetComponent<Bullet>())
+                    GameObject bullet = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].bulletSpawnPoint.position, Quaternion.identity);
+                    if (bullet.GetComponent<Bullet>())
                     {
-                        bullet2.GetComponent<Bullet>().damage = weapons[currentWeapon].damage; //+ random damage 
-                        bullet2.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].SecBulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                        bullet.GetComponent<Bullet>().damage = weapons[currentWeapon].damage; //+ random damage 
+                        bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
                     }
                     else
                     {
-                        bullet2.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].SecBulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                        bullet.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].bulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
                     }
-                }
 
-                yield return new WaitForSeconds(weapons[currentWeapon].bulletDelayEnemy);
-                i++;
+
+                    if (weapons[currentWeapon].SecBulletSpawnPoint != null)
+                    {
+
+                        GameObject bullet2 = Instantiate(weapons[currentWeapon].BulletPrefab, weapons[currentWeapon].SecBulletSpawnPoint.position, Quaternion.identity);
+                        if (bullet2.GetComponent<Bullet>())
+                        {
+                            bullet2.GetComponent<Bullet>().damage = weapons[currentWeapon].damage; //+ random damage 
+                            bullet2.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].SecBulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                        }
+                        else
+                        {
+                            bullet2.GetComponent<Rigidbody>().AddRelativeForce(weapons[currentWeapon].SecBulletSpawnPoint.forward * weapons[currentWeapon].bulletFlySpeedForce, ForceMode.Impulse);
+                        }
+                    }
+
+                    yield return new WaitForSeconds(weapons[currentWeapon].bulletDelayEnemy);
+                    i++;
+                }
+                else
+                {
+                    i = weapons[currentWeapon].shotsInRow;
+                }
             }
 
 

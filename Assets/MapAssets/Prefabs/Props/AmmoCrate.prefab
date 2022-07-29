@@ -142,7 +142,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fed1f9eb2ee61054cb76258d61bf6e5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Events:
+  interactEvents:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 567478659}
@@ -157,6 +157,22 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  DestroyAfterTriggerEnter: 0
+  triggerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  onTriggerEnterEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onTriggerExitEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  loadNextScene: 0
+  sceneToLoad: 0
+  isTechPart: 0
+  techPartAmount: 0
+  changePlayerView: 0
+  view: 0
 --- !u!114 &567478659
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -174,6 +190,10 @@ MonoBehaviour:
   - {fileID: 8145820524250371990}
   - {fileID: 954335686744914158}
   animation: {fileID: 567478663}
+  grenades: 0
+  gunMagazines: 0
+  machineGunMagazines: 0
+  techParts: 100
 --- !u!111 &567478663
 Animation:
   m_ObjectHideFlags: 0

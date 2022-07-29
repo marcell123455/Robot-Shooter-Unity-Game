@@ -6,7 +6,6 @@ public class MenuManager : MonoBehaviour
 {
 
     public GameObject[] menuParent;
-    public GameObject[] Popup;
 
     public void SetMenu(int index)
     {
@@ -14,17 +13,8 @@ public class MenuManager : MonoBehaviour
         {
             M.SetActive(false);
         }
+        if(index >= 0)
         menuParent[index].SetActive(true);
-    }
-
-    public void SetPopup(int index)
-    {
-        foreach (GameObject P in Popup)
-        {
-            P.SetActive(false);
-        }
-
-        Popup[index].SetActive(true);
     }
 
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameSettings : MonoBehaviour
 {
@@ -12,7 +13,7 @@ public class GameSettings : MonoBehaviour
     {
         //set default keys if no save data exists
         if (!PlayerPrefs.HasKey("unlockedLevels")) {
-            SaveGameSettings(0, 0, 0);
+            SaveGameSettings(0, -10, 0);
             PlayerPrefs.SetInt("unlockedLevels", 1);
             PlayerPrefs.SetInt("techParts", 0);
 
@@ -28,7 +29,20 @@ public class GameSettings : MonoBehaviour
 
     public void UnlockNextLevel()
     {
-        PlayerPrefs.SetInt("unlockedLevels", PlayerPrefs.GetInt("unlockedLevels") + 1);
+        if (PlayerPrefs.GetInt("unlockedLevels") < 4 && SceneManager.GetActiveScene().buildIndex -1 == PlayerPrefs.GetInt("unlockedLevels"))
+        {
+            PlayerPrefs.SetInt("unlockedLevels", PlayerPrefs.GetInt("unlockedLevels") + 1);
+        }
+    }
+
+    public void LoadLevel(int level)
+    {
+        GameObject.Find("SceneLoader").GetComponent<SceneLoadingManager>().LoadScene(level);
+    }
+
+    public void LoadLastUnlockedLevel()
+    {
+        GameObject.Find("SceneLoader").GetComponent<SceneLoadingManager>().LoadScene(PlayerPrefs.GetInt("unlockedLevels") + 1);
     }
 
     public void UpgradePlayerStat(int stat, int stage)
