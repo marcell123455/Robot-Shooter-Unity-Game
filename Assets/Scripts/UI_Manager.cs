@@ -17,9 +17,10 @@ public class UI_Manager : MonoBehaviour
     public Slider masterVolume;
     public Slider musicVolume;
     public Slider effectsVolume;
+    public Slider sensChange;
 
 
-    
+
     [Header("Gameplay UI")]
     public Image healthBar;
     public Image staminaBar;
@@ -61,7 +62,7 @@ public class UI_Manager : MonoBehaviour
                 masterVolume.value = PlayerPrefs.GetFloat("MasterVol");
                 musicVolume.value = PlayerPrefs.GetFloat("MusicVol");
                 effectsVolume.value = PlayerPrefs.GetFloat("EffectsVol");
-
+                sensChange.value = PlayerPrefs.GetFloat("SensetivityChange");
             }
         }
     }
@@ -95,6 +96,11 @@ public class UI_Manager : MonoBehaviour
             mixer.SetFloat("Effects", effectsVolume.value);
         }
 
+        if(player != null)
+        {
+            player.mouseSens = 600f + sensChange.value;
+        }
+
         if(KatanaHold != null)
         {
             KatanaHold.fillAmount = player.KatanaHold.weight;
@@ -111,8 +117,8 @@ public class UI_Manager : MonoBehaviour
 
     public void SaveAudioSettings()
     {
-
-        GS.SaveGameSettings(masterVolume.value, musicVolume.value, effectsVolume.value);
+        print("Saved Settings");
+        GS.SaveGameSettings(masterVolume.value, musicVolume.value, effectsVolume.value, sensChange.value);
     }
     public IEnumerator DisplayPickup(int MagazinesGun, int MagazinesMachinegun, int Grenades, int TechParts)
     {

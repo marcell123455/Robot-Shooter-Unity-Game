@@ -11,6 +11,8 @@ public class SceneLoadingManager : MonoBehaviour
     private void Awake()
     {
         DontDestroyOnLoad(this.gameObject);
+
+        Time.timeScale = 1;
     }
     public void LoadScene(int sceneIndex)
     {
@@ -18,7 +20,7 @@ public class SceneLoadingManager : MonoBehaviour
         SceneManager.LoadScene(1, LoadSceneMode.Single);
     }
 
-    public void FixedUpdate()
+    public void Update()
     {
         if(SceneManager.GetSceneByBuildIndex(1) == SceneManager.GetActiveScene())
         {

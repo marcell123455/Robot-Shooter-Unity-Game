@@ -1652,7 +1652,7 @@ MonoBehaviour:
   moveSpeed: 7
   sprintSpeed: 3
   moveAcceleration: 0.01
-  jumpStrengh: 450
+  jumpStrengh: 470
   onGround: 0
   maxSlope: 45
   mouseSens: 600

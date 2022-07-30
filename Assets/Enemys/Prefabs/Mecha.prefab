@@ -1052,9 +1052,9 @@ MonoBehaviour:
   runSpeed: 5
   localVelocity: {x: 0, y: 0, z: 0}
   RB: {fileID: 6825073369413514007}
-  enemySkinnedMeshes: []
-  enemyMeshes:
+  enemySkinnedMeshes:
   - {fileID: 6825073369399852658}
+  enemyMeshes: []
   HitColor: {r: 0.39215687, g: 0, b: 0, a: 0}
   animator: {fileID: 6825073369404113074}
   agent: {fileID: 6825073369413514013}

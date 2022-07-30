@@ -186,6 +186,7 @@ public class Player : MonoBehaviour
     public void ResetPlayer()
     {
         this.transform.position = respawnPoint.position;
+        GameObject.Find("Scriptmanager").GetComponentInChildren<PauseGame>().TogglePause();
     }
 
     private void FixedUpdate()

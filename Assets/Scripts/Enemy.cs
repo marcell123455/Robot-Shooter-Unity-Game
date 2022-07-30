@@ -280,8 +280,11 @@ public class Enemy : MonoBehaviour
             agent.SetDestination(transform.position);
         }
 
-        if (type == enemyType.Soldier)
+        if (type == enemyType.Soldier || type == enemyType.HeavySoldier)
+        {
+
             transform.LookAt(player);
+        }
 
         if (MechBody != null)
         {
@@ -296,21 +299,22 @@ public class Enemy : MonoBehaviour
             TurretWeapon.rotation = Quaternion.RotateTowards(TurretWeapon.rotation, Quaternion.LookRotation(lTargetDir), Time.deltaTime * turretTurnSpeed);
         }
 
-        if (weapons.Length > 0 && (type != enemyType.Turret || type == enemyType.Mech))
+     
+
+        if (weapons.Length > 0 && (type != enemyType.Turret && type != enemyType.Mech && type != enemyType.Soldier && type != enemyType.HeavySoldier))
         {
             weapons[currentWeapon].bulletSpawnPoint.LookAt(player);
-            if(weapons[currentWeapon].SecBulletSpawnPoint != null)
+
+
+
+
+            if (weapons[currentWeapon].SecBulletSpawnPoint != null)
             {
                 weapons[currentWeapon].SecBulletSpawnPoint.LookAt(player);
             }
         }
 
-            ///Attack code here
-            if(type == enemyType.Soldier)
-            {
 
-                //WeaponShotAudio.PlayOneShot(weapons[currentWeapon].shootSound);
-            }
 
             if (weapons.Length > 0)
             {

@@ -13,7 +13,7 @@ public class GameSettings : MonoBehaviour
     {
         //set default keys if no save data exists
         if (!PlayerPrefs.HasKey("unlockedLevels")) {
-            SaveGameSettings(0, -10, 0);
+            SaveGameSettings(0, -10, 0, 0);
             PlayerPrefs.SetInt("unlockedLevels", 1);
             PlayerPrefs.SetInt("techParts", 0);
 
@@ -65,11 +65,12 @@ public class GameSettings : MonoBehaviour
         PlayerPrefs.SetInt("techParts", PlayerPrefs.GetInt("techParts") + amount);
     }
 
-    public void SaveGameSettings(float masterVol, float musicVol, float effectsVol)
+    public void SaveGameSettings(float masterVol, float musicVol, float effectsVol, float Change)
     {
         PlayerPrefs.SetFloat("MasterVol", masterVol);
         PlayerPrefs.SetFloat("MusicVol", musicVol);
         PlayerPrefs.SetFloat("EffectsVol", effectsVol);
+        PlayerPrefs.SetFloat("SensetivityChange", Change);
     }
 
     public void DeleteSavegame()
