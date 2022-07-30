@@ -98,7 +98,7 @@ public class UI_Manager : MonoBehaviour
 
         if(player != null)
         {
-            player.mouseSens = 600f + sensChange.value;
+            player.mouseSens = 700f + sensChange.value;
         }
 
         if(KatanaHold != null)

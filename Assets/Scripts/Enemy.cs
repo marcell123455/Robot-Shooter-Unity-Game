@@ -405,8 +405,15 @@ public class Enemy : MonoBehaviour
     {
         foreach (SkinnedMeshRenderer SMR in enemySkinnedMeshes)
         {
-            SMR.material.EnableKeyword("_EMISSION");
-            SMR.material.SetColor("_EmissionColor", HitColor);
+            Material[] mats;
+
+
+            mats = SMR.materials;
+            mats[0].EnableKeyword("_EMISSION");
+            mats[0].SetColor("_EmissionColor", HitColor);
+
+            SMR.materials = mats;
+
         }
 
         foreach (MeshRenderer MR in enemyMeshes)
@@ -418,7 +425,14 @@ public class Enemy : MonoBehaviour
         
         foreach (SkinnedMeshRenderer SMR in enemySkinnedMeshes)
         {
-            SMR.material.SetColor("_EmissionColor", Color.black);
+            Material[] mats;
+
+
+            mats = SMR.materials;
+            mats[0].DisableKeyword("_EMISSION");
+            mats[0].SetColor("_EmissionColor", Color.black);
+
+            SMR.materials = mats;
         }
 
         foreach (MeshRenderer MR in enemyMeshes)

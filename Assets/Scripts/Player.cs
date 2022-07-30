@@ -389,7 +389,10 @@ public class Player : MonoBehaviour
     RaycastHit hit;
     public void PhysicsCalculation()
     {
-        if (Physics.Raycast(transform.position, Vector3.down, 2f)){
+        if (Physics.Raycast(transform.position + new Vector3(0,0,1), Vector3.down,2f) || Physics.Raycast(transform.position + new Vector3(0, 0, -1), Vector3.down, 2f) || Physics.Raycast(transform.position - new Vector3(1, 0, 0), Vector3.down, 2f) || Physics.Raycast(transform.position - new Vector3(-1, 0, 0), Vector3.down, 2f))
+        
+        //if (Physics.BoxCast(transform.position, Vector3.down, Vector3.down))
+        {
             onGround = true;
         }
         else
@@ -397,6 +400,7 @@ public class Player : MonoBehaviour
             onGround = false;
         }
 
+        
         //Debug.DrawLine(transform.position, transform.position - new Vector3(0,2,0), Color.green);
 
         if (currentInput == 0)

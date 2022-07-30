@@ -22,6 +22,9 @@ public class Interactable : MonoBehaviour
     public bool changePlayerView;
     public int view;
 
+    [Header("ResetPlayerSpawn")]
+    public Transform PlayerSpawnpoint;
+
 
     public void Start()
     {
@@ -58,6 +61,11 @@ public class Interactable : MonoBehaviour
             if (changePlayerView)
             {
                 GameObject.Find("Player").GetComponent<Player>().currentInput = view;
+            }
+
+            if(PlayerSpawnpoint != null)
+            {
+                GameObject.Find("Player").GetComponent<Player>().SetPlayerCurrentRespawn(PlayerSpawnpoint);
             }
 
             if (DestroyAfterTriggerEnter)
