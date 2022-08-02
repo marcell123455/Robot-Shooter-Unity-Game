@@ -13,7 +13,7 @@ public class GameSettings : MonoBehaviour
     {
         //set default keys if no save data exists
         if (!PlayerPrefs.HasKey("unlockedLevels")) {
-            SaveGameSettings(0, -10, 0, 0);
+            SaveGameSettings(0, -10, 0, -150);
             PlayerPrefs.SetInt("unlockedLevels", 1);
             PlayerPrefs.SetInt("techParts", 0);
 

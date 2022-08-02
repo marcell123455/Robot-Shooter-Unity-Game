@@ -483,13 +483,16 @@ public class Player : MonoBehaviour
 
             Vector3 targetPoint;
 
-            if(Physics.Raycast(camera.transform.position, camera.transform.forward + camera.transform.position, out hit, 80, WeaponAimlayerMask))
+            if(Physics.Raycast(camera.transform.position, camera.transform.forward, out hit, 100,WeaponAimlayerMask))
             {
-                targetPoint = hit.point;
+                //targetPoint = hit.point;
+                targetPoint = camera.transform.position + camera.transform.forward * hit.distance;
+                print(hit.distance);
+
             }
             else
             {
-                targetPoint = (camera.transform.forward * 100) + camera.transform.position;
+                targetPoint = (camera.transform.position + camera.transform.forward * 90);
             }
 
 
@@ -501,7 +504,7 @@ public class Player : MonoBehaviour
             {
 
             }
-            WeaponOrigin.transform.LookAt(targetPoint);
+            weapons[currentWeapon].bulletSpawnPoint.LookAt(targetPoint);
 
 
         }

@@ -432,7 +432,7 @@ GameObject:
   - component: {fileID: 6114259344292909069}
   - component: {fileID: 6114259344292909070}
   - component: {fileID: 6114259344292909071}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: LightSaberDamageZone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1704,7 +1704,7 @@ MonoBehaviour:
   WeaponOrigin: {fileID: 6114259345298926229}
   WeaponAimlayerMask:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 193
   WeaponShotAudio: {fileID: 6114259345054126546}
   currentWeapon: 0
   lastUsedWeapon: 0

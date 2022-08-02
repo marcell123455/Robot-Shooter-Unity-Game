@@ -198,7 +198,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3391682317582372324, guid: 606b97a788edecc49b6c5fbad6a31a5e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -31
+      value: -33
       objectReference: {fileID: 0}
     - target: {fileID: 3391682317582372324, guid: 606b97a788edecc49b6c5fbad6a31a5e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -10937,7 +10937,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6767128624137048253, guid: 09ee123e101f12a418b7156ca2a0e184, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -32
+      value: -34
       objectReference: {fileID: 0}
     - target: {fileID: 6767128624137048253, guid: 09ee123e101f12a418b7156ca2a0e184, type: 3}
       propertyPath: m_LocalPosition.y
@@ -11166,7 +11166,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3391682317582372324, guid: 606b97a788edecc49b6c5fbad6a31a5e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -31
+      value: -33
       objectReference: {fileID: 0}
     - target: {fileID: 3391682317582372324, guid: 606b97a788edecc49b6c5fbad6a31a5e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -16963,7 +16963,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6767128624137048253, guid: 09ee123e101f12a418b7156ca2a0e184, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -32
+      value: -34
       objectReference: {fileID: 0}
     - target: {fileID: 6767128624137048253, guid: 09ee123e101f12a418b7156ca2a0e184, type: 3}
       propertyPath: m_LocalPosition.y
@@ -17511,6 +17511,7 @@ MonoBehaviour:
   techPartAmount: 0
   changePlayerView: 0
   view: 0
+  PlayerSpawnpoint: {fileID: 0}
 --- !u!65 &264491653707835164
 BoxCollider:
   m_ObjectHideFlags: 0

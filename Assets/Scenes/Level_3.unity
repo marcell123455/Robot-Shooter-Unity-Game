@@ -1883,7 +1883,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1763438703427608261, guid: 705d97daa6ae57e4c9890491b8279d7b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 43.030716
+      value: 44
       objectReference: {fileID: 0}
     - target: {fileID: 1763438703427608261, guid: 705d97daa6ae57e4c9890491b8279d7b, type: 3}
       propertyPath: m_LocalRotation.w
@@ -9854,6 +9854,7 @@ MonoBehaviour:
   techPartAmount: 0
   changePlayerView: 0
   view: 0
+  PlayerSpawnpoint: {fileID: 0}
 --- !u!65 &1307190111
 BoxCollider:
   m_ObjectHideFlags: 0

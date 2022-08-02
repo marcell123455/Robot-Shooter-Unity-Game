@@ -3419,6 +3419,7 @@ MonoBehaviour:
   techPartAmount: 0
   changePlayerView: 0
   view: 0
+  PlayerSpawnpoint: {fileID: 0}
 --- !u!65 &435234366
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11076,7 +11077,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1763438703427608261, guid: 705d97daa6ae57e4c9890491b8279d7b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 199.79472
+      value: 199
       objectReference: {fileID: 0}
     - target: {fileID: 1763438703427608261, guid: 705d97daa6ae57e4c9890491b8279d7b, type: 3}
       propertyPath: m_LocalRotation.w
@@ -12441,7 +12442,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 3.7999878, y: -51.099976}
+  m_AnchoredPosition: {x: 3.8000488, y: -51.099976}
   m_SizeDelta: {x: 300, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1535269415
@@ -23450,6 +23451,7 @@ MonoBehaviour:
   techPartAmount: 0
   changePlayerView: 0
   view: 0
+  PlayerSpawnpoint: {fileID: 0}
 --- !u!65 &7912103003760268919
 BoxCollider:
   m_ObjectHideFlags: 0
